@@ -1,0 +1,72 @@
+Tell me- which will better apk or GitHub repo for  My project,i have no computer 
+
+
+My project 
+create complete GitHub repo or apk  project written(GitHub repository must run by using only GitHub,no computer),i want to create complete big / small project by using multiple ai ,big / small projects like software, application, writing scripts html,css,js, python,c/c++ etc),and final written project store in single box/chat message with copy option to copy complete project,
+feature - system creates complete tree,loops,true, false etc., according provided codes in Manager results
+i have 40 api keys of these models(these api keys works on any given model ,i will hardcode the all api keys)
+,i want make them work together where manager decides everything from strat to end, manager creates complete 39 ai tree,loops, true,false,etc., for multiple managers,coders and reviewers to get accurate result(you have to write complex and advanced instructions for Manager so understand user prompt and system can understand codes for creating tree of ai's and what to instruct them according to Manager),
+..Manager instruction must contain(I'm just explaining to you ,you have write in proper way), you're manager of 39 ai's,you have create complete tree(Start//.. and tree has multiple ends End1//.. , End2//..), loops(based on reviewers Loop//..), true and false(this is for final reviewer who review complete project and  tells system files are correct (True//..) or incorrect(False//..  with Prompt//..) after correcting files recheck same process until all true), for 39,all ai must contain prompt//.. to instruct next ai with his role and tells complete instruction codes structure and complete project structure with necessary information),some files needed another files to create properly so we also need to give codes to files for system which files are generated or not, which file where needed(system needs to also update the project structure instructions so ai can get proper information,also SYS//.. for system,all ai must know in each prompt everything about our system, instructions,his role everything,
+
+
+
+The "Manager" Agent: Use Nemotron-3-Ultra-550B-A55B to receive my initial prompt, break it down into steps, and write the instructions.
+The "Coder" Agent: Send those instructions to DeepSeek-V4-Pro to actually write the scripts.
+The "Reviewer" Agent: Send the output to Mistral-Medium-3.5 to check for formatting, syntax errors before finalizing the output.
+Manager -
+invoke_url='https://integrate.api.nvidia.com/v1/chat/completions'
+payload=$(cat <<'JSON'
+{
+  "model": "nvidia/nemotron-3-ultra-550b-a55b",
+  "messages": [{"role":"user","content":""}],
+  "temperature": 1,
+  "top_p": 0.95,
+  "max_tokens": 16384,
+  "reasoning_budget": 16384,
+  "chat_template_kwargs": {"enable_thinking":true},
+  "stream": true
+}
+JSON
+)
+Coders-
+invoke_url='https://integrate.api.nvidia.com/v1/chat/completions'
+payload=$(cat <<'JSON'
+{
+  "model": "deepseek-ai/deepseek-v4-pro",
+  "messages": [{"role":"user","content":""}],
+  "temperature": 1,
+  "top_p": 0.95,
+  "max_tokens": 16384,
+  "chat_template_kwargs": {"thinking":false},
+  "stream": false
+}
+JSON
+)
+curl -sS \
+  --request POST \
+  --url "$invoke_url" \
+  --header "Authorization: Bearer $NVIDIA_API_KEY" \
+  --header "Content-Type: application/json" \
+  --data "$payload"
+Reviewers-
+curl -sS -N \
+  --request POST \
+  --url "$invoke_url" \
+  --header "Authorization: Bearer $NVIDIA_API_KEY" \
+  --header "Accept: application/json" \
+  --header "Content-Type: application/json" \
+  --data "$payload"
+stream=false
+if [ "$stream" = true ]; then
+    accept_header='Accept: text/event-stream'
+else
+    accept_header='Accept: application/json'
+fi
+cat > payload.json <<JSON
+{"messages":[{"role":"user","content":""}],"model":"mistralai/mistral-medium-3.5-128b","reasoning_effort":"high","max_tokens":16384,"stream":false,"temperature":0.7,"top_p":1}
+JSON
+curl https://integrate.api.nvidia.com/v1/chat/completions \
+  -H "Authorization: Bearer $NVIDIA_API_KEY" \
+  -H "Content-Type: application/json" \
+  -H "$accept_header" \
+  -d @payload.json
